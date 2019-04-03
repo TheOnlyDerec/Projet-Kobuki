@@ -25,7 +25,7 @@ class MoteurCC(object):
         newVit = newVit/(self.R*self.J + self.R*self.f*dt+self.ke*self.kc*dt)
 
         self.vitesses = np.append(self.vitesses, newVit)
-        
+
         i = (Um - ke*self.vitesses[-1])/R
         np.append(self.couples, kc*i)
 
