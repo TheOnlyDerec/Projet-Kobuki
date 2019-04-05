@@ -21,20 +21,23 @@ class MoteurCC(object):
         self.couples = np.array([0])
 
     def step(self, dt):
+        """
+        Un pas de simulation de dt secondes.
+        """
         newVit = self.Um*self.kc*dt+self.R*self.J*self.vitesses[-1]
         newVit = newVit/(self.R*self.J + self.R*self.f*dt+self.ke*self.kc*dt)
 
         self.vitesses = np.append(self.vitesses, newVit)
 
-        i = (Um - ke*self.vitesses[-1])/R
-        np.append(self.couples, kc*i)
+        i = (self.Um - self.ke*self.vitesses[-1])/self.R
+        np.append(self.couples, self.kc*i)
 
 
 if __name__ == '__main__':
     M = MoteurCC(Um=10)
     for i in range(9999):
-        C = Co.ControllerPI(M.vitesses, 1, 15, dt, 0.004)
+        C = Co.ControllerPI(M.vitesses, 1, 15, 0.001, 0.004)
         M.Um = C
-        M.step(0.001)
+        M.step(dt)
     plt.plot(np.linspace(0,10,10000),M.vitesses)
     plt.show()

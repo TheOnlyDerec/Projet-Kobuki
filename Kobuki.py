@@ -2,6 +2,7 @@ import numpy as np
 import math
 import matplotlib.pyplot as plt
 from matplotlib import animation
+import random
 
 pas = 0.001
 T = 10
@@ -170,7 +171,7 @@ class kobuki(object):
 
         self.mvt2(G,D,pas) #Finalement on simule.
 
-    def MCI(self, v, vt):
+    def MCI(self, r, theta):
         """
         On donne une vitesse v et une vitesse angulaire vt. On retourne les vitesses des roues gauche et droite nécessaires pour les atteindre, dans les limites du possible.
         L'intérêt de cette fonction par rapport à PtCible est qu'on peut l'utiliser en conjonction avec des correcteurs.
@@ -178,7 +179,7 @@ class kobuki(object):
         G = 0.5 * r / math.pi - theta * self.d  # MCI
         D = 0.5 * r / math.pi + theta * self.d
 
-        if G > 2 * math.pi and D > 2 * math.pi:  # On limite les vitesses des roues aux valeurs max. Ici on suppost un tour par seconde.
+        if G > 2 * math.pi and D > 2 * math.pi:  # On limite les vitesses des roues aux valeurs max. Ici on suppose un tour par seconde.
             if G > D:
                 d = G / D
                 G = 2 * math.pi
@@ -199,7 +200,7 @@ class kobuki(object):
         return [G,D]
 
 
-def movingPlot(self):
+    def movingPlot(self):
         """
         Tracer animé des positions du robot. Il sert surtour à illustrer une méthode alternative (moins efficace) d'effectuer un plot animé.
         """
@@ -216,6 +217,19 @@ def movingPlot(self):
             plt.title(i) #On donne comme titre à l'image le numéro de la frame.
 
         plt.show()
+
+    def listen(self):
+        """
+        Permet la commande à distance d'un robot. Pendant num pas de simulation, il se dirige vers le point (x,y).
+        """
+        UDPSock = socket.socket(type=socket.SOCK_DGRAM)
+        listen_addr = (socket.gethostname(), 12345)
+        UDPSock.bind(listen_addr)
+        while True:
+            data, addr = UDPSock.recvfrom(1024)
+            (num, x, y) = unpack('idd', data)
+            for i in range(1,num):
+                self.PtCible(x,y)
 
 class essaim(object):
     def __init__(self, robots=np.array([]), mode=''):
@@ -262,6 +276,20 @@ class essaim(object):
                 R.PtCible(self.robots[0].pos[-1][0],self.robots[0].pos[-1][1])
 
 
+class environnement(object):
+    def __init__(self, obstacles=np.array([]), essaim=essaim(), objets=np.array([])):
+        """
+        Les obstacles doivent être donnés en tant qu'éléments d'un array. Ils sont considérés rectangulaires,
+                        leur coin supérieur gauche étant codé en premier et le coin inférieur droite en deuxième.
+        Les objets sont des couples stockés dansd un array, ils correspondent à des coordonnées.
+        """
+        self.obs=obstacles
+        self.essaim=essaim
+        self.obj=objets
+
+
+
+
 if __name__ == '__main__':
     A = kobuki()
     # t = np.linspace(0,2*math.pi,10)
@@ -289,14 +317,41 @@ if __name__ == '__main__':
     # A.statPlot()
 
     A = kobuki()
-    B = kobuki(pos=np.array([-1,-1]))
-    C = kobuki(pos=np.array([-2,0]))
-    D = kobuki(pos=np.array([0,-2]))
-
+    B = kobuki(pos=np.array([-1, -1]))
+    C = kobuki(pos=np.array([-2, 0]))
+    D = kobuki(pos=np.array([0, -2]))
     P = essaim(np.array([A,B,C,D]),'')
 
-    while np.sqrt((P.robots[1].pos[-1][0]-P.robots[0].pos[-1][0])**2+(P.robots[1].pos[-1][1]-P.robots[0].pos[-1][1])**2)>0.01:
-        P.robots[0].PtCible(5,5)
-        P.follow()
 
-    P.anim9dPlot(len(P.robots[0].pos))
+    #######
+    # for i in range(10000):
+    #     for R in P.robots:
+    #         R.PtCible(random.uniform(-5,5), random.uniform(-5,5))
+    # P.anim9dPlot(10000)
+    # print(len(P.robots[0].pos))
+    ########
+
+    ########
+    ###Test de plusieurs fonctions. Les robots d'un essaim suivent leur leader pendant son mouvement.
+
+    # while np.sqrt((P.robots[1].pos[-1][0]-P.robots[0].pos[-1][0])**2+(P.robots[1].pos[-1][1]-P.robots[0].pos[-1][1])**2)>0.01:
+    #     P.robots[0].PtCible(5,5)
+    #     P.follow()
+    #
+    # P.anim9dPlot(len(P.robots[0].pos)
+    ########
+
+    ########
+    P=essaim(np.array([A]))
+    # vx=np.linspace(0,10,10000)
+    # vy=np.sin(vx)
+    # vr=np.sqrt(np.multiply(vx,vx)+np.multiply(vy,vy))
+    # vt=np.arctan2(vy,vx)
+    # for i in range(9999):
+    #     [G,D]=P.robots[0].MCI(vr[i],vt[i])
+    #     P.robots[0].mvt2(G,D,pas)
+    # P.anim9dPlot(10000)
+    for i in range(10000):
+         [G,D]=P.robots[0].MCI(0,2*np.pi/100)
+         P.robots[0].mvt2(G,D,pas)
+    print(P.robots[0].orientation[-1])
