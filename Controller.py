@@ -6,11 +6,11 @@ def ControllerP(positions, cible, kp):
     return comm
 
 
-def ControllerPI(positions, cible, kp, Te, taui):
+def ControllerPI(positions, cible, kp, Te, ki):
     """
     :param Te: dt
     """
-    comm = kp*(-positions[-1]+cible + Te*(-np.ndarray.sum(positions-cible))/taui)
+    comm = kp*(-positions[-1]+cible) + Te*(-np.ndarray.sum(positions-cible))/ki
     return comm
 
 

@@ -1,11 +1,11 @@
 import numpy as np
 import matplotlib.pyplot as plt
-import Controller as Co
+from Controller import *
 
-dt = 0.001
+pas = 0.001
 
 class MoteurCC(object):
-    def __init__(self, R=1, kc=0.01, f=0.01, J=0.01, ke=0.1, Um=0):
+    def __init__(self, R=1, kc=0.01, f=0.01, J=0.01, ke=0.1, Um=1):
         """
         Vitesses = Omegas
         """
@@ -20,7 +20,7 @@ class MoteurCC(object):
         self.vitesses = np.array([0])
         self.couples = np.array([0])
 
-    def step(self, dt):
+    def step(self, dt=pas):
         """
         Un pas de simulation de dt secondes.
         """
@@ -34,10 +34,21 @@ class MoteurCC(object):
 
 
 if __name__ == '__main__':
-    M = MoteurCC(Um=10)
-    for i in range(9999):
-        C = Co.ControllerPI(M.vitesses, 1, 15, 0.001, 0.004)
-        M.Um = C
-        M.step(dt)
-    plt.plot(np.linspace(0,10,10000),M.vitesses)
+    ########
+    ###Test moteur contrôllé
+    # M = MoteurCC(Um=10)
+    # for i in range(9999):
+    #     C = ControllerPI(M.vitesses, 1, 0, 1000, 4000)
+    #     M.Um = C
+    #     M.step(pas)
+    # plt.plot(np.linspace(0,10,10000),M.vitesses)
+    # plt.show()
+    ########
+
+    M=MoteurCC()
+    for i in range(10000):
+        M.step(0.001)
+        print(i)
+    plt.plot(np.linspace(0,10,10001),M.vitesses)
     plt.show()
+
