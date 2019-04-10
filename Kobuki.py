@@ -117,20 +117,44 @@ class kobuki(object):
         self.mvt2(G,D,pas) #Finalement on simule
 
     def PtCiblePI(self, x, y):
-        D = np.sqrt(x*x + y*y)
-        the = np.arctan2(y,x)
+        dX = x - self.pos[-1][0]
+        dY = y - self.pos[-1][1]
+
+        r = math.sqrt(dX * dX + dY * dY)  # Calcul de la distance linéaire et angulaire entre le robot et la cible.
+        theta = np.arctan2(dY, dX)
+        dtheta = theta - self.orientation[-1]
+
+        if theta > math.pi:  # Correction de l'écart angulaire.
+            theta -= 2 * math.pi
+        if theta < -math.pi:
+            theta += 2 * math.pi
+
+        while dtheta > 0.01*np.pi or dtheta < -0.01*np.pi :
+            V = ControllerPI(self.orientation-theta, 0, 15, 1000, 4000)
+            self.mvt2(-V,V,pas)
+
+            dX = x - self.pos[-1][0]
+            dY = y - self.pos[-1][1]
+
+            dtheta = theta - self.orientation[-1]
+
+        R = np.array([])
+        print(self.orientation[-1])
 
         for i in range(10000):
-            ds = np.array([np.sqrt(P[0]*P[0]+P[1]*P[1]) for P in self.pos])
-            ys = self.orientation
+        #while r > 0.01 or r <-0.01 :
+            dX = - self.pos[-1][0] + x
+            dY = - self.pos[-1][1] + y
 
-            T = ControllerPI(ds, D, 15, 1000, 4000)
-            Theta = ControllerPI(ys, the, 15, 1000, 4000)
+            R = np.append(R, -np.sqrt(dX*dX+dY*dY))
 
-            [G,D]=self.MCI(T, Theta)
-            self.mvt2(G,D,pas)
-            print(i)
+            r = R[-1]
 
+            V = ControllerPI(R, 0, 15, 1000, 4000)
+
+            print(V)
+
+            self.mvt2(V, V, pas)
 
     def MCI(self, r, theta):
         """
@@ -346,4 +370,4 @@ if __name__ == '__main__':
     E = kobuki()
     F = essaim(np.array([E]),'')
     F.robots[0].PtCiblePI(5,5)
-    F.animatedPlot(10000)
+    F.animatedPlot(len(F.robots[0].pos))
